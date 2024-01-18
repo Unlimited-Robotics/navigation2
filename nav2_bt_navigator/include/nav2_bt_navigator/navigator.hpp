@@ -176,6 +176,7 @@ public:
     blackboard->set<bool>("initial_pose_received", false);  // NOLINT
     blackboard->set<int>("number_recoveries", 0);  // NOLINT
     blackboard->set<std::shared_ptr<nav2_util::OdomSmoother>>("odom_smoother", odom_smoother);  // NOLINT
+    blackboard->set<int>("next_recovery_child", 0);
 
     return configure(parent_node, odom_smoother) && ok;
   }

@@ -73,12 +73,18 @@ void RegulatedPurePursuitController::configure(
   declare_parameter_if_not_declared(
     node, plugin_name_ + ".rotate_to_heading_angular_vel", rclcpp::ParameterValue(1.8));
   declare_parameter_if_not_declared(
+    node, plugin_name_ + ".angular_speed_limit", rclcpp::ParameterValue(1.8));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".min_angular_velocity", rclcpp::ParameterValue(0.05));
+  declare_parameter_if_not_declared(
     node, plugin_name_ + ".transform_tolerance", rclcpp::ParameterValue(0.1));
   declare_parameter_if_not_declared(
     node, plugin_name_ + ".use_velocity_scaled_lookahead_dist",
     rclcpp::ParameterValue(false));
   declare_parameter_if_not_declared(
     node, plugin_name_ + ".min_approach_linear_velocity", rclcpp::ParameterValue(0.05));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".use_approach_linear_velocity_scaling", rclcpp::ParameterValue(true));
   declare_parameter_if_not_declared(
     node, plugin_name_ + ".approach_velocity_scaling_dist",
     rclcpp::ParameterValue(0.6));
@@ -88,6 +94,8 @@ void RegulatedPurePursuitController::configure(
   declare_parameter_if_not_declared(
     node, plugin_name_ + ".use_collision_detection",
     rclcpp::ParameterValue(true));
+  declare_parameter_if_not_declared(
+    node, plugin_name_ + ".max_allowed_time_to_collision", rclcpp::ParameterValue(1.0));
   declare_parameter_if_not_declared(
     node, plugin_name_ + ".use_regulated_linear_velocity_scaling", rclcpp::ParameterValue(true));
   declare_parameter_if_not_declared(
@@ -127,6 +135,12 @@ void RegulatedPurePursuitController::configure(
   node->get_parameter(
     plugin_name_ + ".rotate_to_heading_angular_vel",
     rotate_to_heading_angular_vel_);
+  node->get_parameter(
+    plugin_name_ + ".angular_speed_limit",
+    angular_speed_limit_);
+  node->get_parameter(
+    plugin_name_ + ".min_angular_velocity",
+    min_angular_velocity_);
   node->get_parameter(plugin_name_ + ".transform_tolerance", transform_tolerance);
   node->get_parameter(
     plugin_name_ + ".use_velocity_scaled_lookahead_dist",
@@ -219,8 +233,29 @@ void RegulatedPurePursuitController::cleanup()
   carrot_arc_pub_.reset();
 }
 
+void RegulatedPurePursuitController::start_new_goal(
+        bool should_rotate, 
+        bool linear_movement,
+        float max_speed,
+        bool enable_obstacles
+    )
+{
+  std::cout << "NEW GOAL RECEIVED INIT" << std::endl;
+  std::cout << "should_rotate = " << should_rotate << std::endl;
+  std::cout << "linear_movement = " << linear_movement << std::endl;
+  std::cout << "max_speed = " << max_speed << std::endl;
+  std::cout << "enable_obstacles = " << enable_obstacles << std::endl;
+  initial_rotation_ = true;
+}
+
+void RegulatedPurePursuitController::finish_current_goal()
+{
+  std::cout << "GOAL FINISH INIT" << std::endl;
+}
+
 void RegulatedPurePursuitController::activate()
 {
+  std::cout << "ACTIVATE INIT" << std::endl;
   RCLCPP_INFO(
     logger_,
     "Activating controller: %s of type "
@@ -239,6 +274,7 @@ void RegulatedPurePursuitController::activate()
 
 void RegulatedPurePursuitController::deactivate()
 {
+  std::cout << "DEACTIVATE INIT" << std::endl;
   RCLCPP_INFO(
     logger_,
     "Deactivating controller: %s of type "
@@ -253,6 +289,7 @@ void RegulatedPurePursuitController::deactivate()
 std::unique_ptr<geometry_msgs::msg::PointStamped> RegulatedPurePursuitController::createCarrotMsg(
   const geometry_msgs::msg::PoseStamped & carrot_pose)
 {
+  //std::cout << "CREATE CARROT INIT" << std::endl;
   auto carrot_msg = std::make_unique<geometry_msgs::msg::PointStamped>();
   carrot_msg->header = carrot_pose.header;
   carrot_msg->point.x = carrot_pose.pose.position.x;
@@ -281,6 +318,9 @@ geometry_msgs::msg::TwistStamped RegulatedPurePursuitController::computeVelocity
   nav2_core::GoalChecker * goal_checker)
 {
   std::lock_guard<std::mutex> lock_reinit(mutex_);
+
+  nav2_costmap_2d::Costmap2D * costmap = costmap_ros_->getCostmap();
+  std::unique_lock<nav2_costmap_2d::Costmap2D::mutex_t> lock(*(costmap->getMutex()));
 
   // Update for the current goal checker's state
   geometry_msgs::msg::Pose pose_tolerance;
@@ -335,10 +375,19 @@ geometry_msgs::msg::TwistStamped RegulatedPurePursuitController::computeVelocity
 
   // Make sure we're in compliance with basic constraints
   double angle_to_heading;
+  double goal_angle_to_rotate_to;
+  
+  if (initial_rotation_){
+    goal_angle_to_rotate_to = 0.1;
+  } else {
+    goal_angle_to_rotate_to = rotate_to_heading_min_angle_;
+  }
+
   if (shouldRotateToGoalHeading(carrot_pose)) {
     double angle_to_goal = tf2::getYaw(transformed_plan.poses.back().pose.orientation);
     rotateToHeading(linear_vel, angular_vel, angle_to_goal, speed);
-  } else if (shouldRotateToPath(carrot_pose, angle_to_heading)) {
+  } else if (shouldRotateToPath(carrot_pose, angle_to_heading, goal_angle_to_rotate_to)) {
+    //std::cout << "SHOULD ROTATE TO PATH" << std::endl;
     rotateToHeading(linear_vel, angular_vel, angle_to_heading, speed);
   } else {
     applyConstraints(
@@ -360,16 +409,32 @@ geometry_msgs::msg::TwistStamped RegulatedPurePursuitController::computeVelocity
   geometry_msgs::msg::TwistStamped cmd_vel;
   cmd_vel.header = pose.header;
   cmd_vel.twist.linear.x = linear_vel;
-  cmd_vel.twist.angular.z = angular_vel;
+  if (angular_vel > angular_speed_limit_){
+    cmd_vel.twist.angular.z = angular_speed_limit_;
+  }
+  else if (angular_vel < -angular_speed_limit_){
+    cmd_vel.twist.angular.z = -angular_speed_limit_;
+  }
+  else{
+    cmd_vel.twist.angular.z = angular_vel;
+  }
+  
+  if (initial_rotation_ &&  linear_vel != 0.0){
+    initial_rotation_ = false;
+    std::cout << "INITIAL ROTATION FINISHED" << std::endl;
+  }
+
   return cmd_vel;
 }
 
 bool RegulatedPurePursuitController::shouldRotateToPath(
-  const geometry_msgs::msg::PoseStamped & carrot_pose, double & angle_to_path)
+  const geometry_msgs::msg::PoseStamped & carrot_pose, 
+  double & angle_to_path,
+  double & min_angle_to_rotate_to)
 {
   // Whether we should rotate robot to rough path heading
   angle_to_path = atan2(carrot_pose.pose.position.y, carrot_pose.pose.position.x);
-  return use_rotate_to_heading_ && fabs(angle_to_path) > rotate_to_heading_min_angle_;
+  return use_rotate_to_heading_ && fabs(angle_to_path) > min_angle_to_rotate_to;
 }
 
 bool RegulatedPurePursuitController::shouldRotateToGoalHeading(
@@ -478,6 +543,10 @@ bool RegulatedPurePursuitController::isCollisionImminent(
   {
     return true;
   }
+  //else{
+  //  std::cout << "x = " << robot_pose.pose.position.x << " y = " << robot_pose.pose.position.y << std::endl;
+  //  std::cout << "not in collision" << std::endl;
+  //}
 
   // visualization messages
   nav_msgs::msg::Path arc_pts_msg;

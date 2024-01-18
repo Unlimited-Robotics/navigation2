@@ -26,6 +26,12 @@ FollowPathAction::FollowPathAction(
   const BT::NodeConfiguration & conf)
 : BtActionNode<nav2_msgs::action::FollowPath>(xml_tag_name, action_name, conf)
 {
+  node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
+  feedback_initialized_ = config().blackboard->get<bool>("feedback_initialized");
+  if(feedback_initialized_){
+    feedback_publisher = config().blackboard->get<rclcpp::Publisher<raya_cmd_msgs::msg::CmdFeedbackHeader>::SharedPtr>("feedback_publisher");
+    error_publisher = config().blackboard->get<rclcpp::Publisher<raya_cmd_msgs::msg::CmdFeedbackHeader>::SharedPtr>("error_publisher");
+  }
 }
 
 void FollowPathAction::on_tick()
@@ -33,6 +39,21 @@ void FollowPathAction::on_tick()
   getInput("path", goal_.path);
   getInput("controller_id", goal_.controller_id);
   getInput("goal_checker_id", goal_.goal_checker_id);
+}
+
+BT::NodeStatus FollowPathAction::on_aborted()
+{
+  int computed_paths = 0;
+  config().blackboard->template set<int>("computed_paths", computed_paths); 
+  RCLCPP_WARN(
+      node_->get_logger(), "FOLLOW PATH ABORTED");
+  if(feedback_initialized_){
+    auto error_state = FeedbackMsg_();
+    error_state.feedback_code = 115;
+    error_state.feedback_msg = "Couldn't follow path";
+    error_publisher->publish(error_state);
+  }
+  return BT::NodeStatus::FAILURE;
 }
 
 void FollowPathAction::on_wait_for_result(

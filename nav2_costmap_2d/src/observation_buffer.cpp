@@ -82,6 +82,7 @@ ObservationBuffer::~ObservationBuffer()
 
 void ObservationBuffer::bufferCloud(const sensor_msgs::msg::PointCloud2 & cloud)
 {
+  std::lock_guard<std::mutex> lock(costmap_mtx);
   geometry_msgs::msg::PointStamped global_origin;
 
   // create a new observation on the list to be populated
@@ -174,6 +175,7 @@ void ObservationBuffer::bufferCloud(const sensor_msgs::msg::PointCloud2 & cloud)
 // returns a copy of the observations
 void ObservationBuffer::getObservations(std::vector<Observation> & observations)
 {
+  std::lock_guard<std::mutex> lock(costmap_mtx);
   // first... let's make sure that we don't have any stale observations
   purgeStaleObservations();
 
@@ -208,6 +210,17 @@ void ObservationBuffer::purgeStaleObservations()
     }
   }
 }
+
+void ObservationBuffer::purgeAllObservations()
+{
+  std::lock_guard<std::mutex> lock(costmap_mtx);
+  if (!observation_list_.empty()) {
+    std::list<Observation>::iterator obs_it = observation_list_.begin();
+    observation_list_.erase(obs_it, observation_list_.end());
+    return;
+  }
+}
+
 
 bool ObservationBuffer::isCurrent() const
 {

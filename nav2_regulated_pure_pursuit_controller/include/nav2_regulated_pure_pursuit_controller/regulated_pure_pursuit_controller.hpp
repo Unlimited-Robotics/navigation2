@@ -79,6 +79,21 @@ public:
   void deactivate() override;
 
   /**
+   * @brief Set variables to start new navigation
+   */
+  void start_new_goal(
+          bool should_rotate = false, 
+          bool linear_movement = false, 
+          float max_speed = 0.0,
+          bool enable_obstacles = true
+      ) override;
+
+  /**
+   * @brief Stop currrent navigation on cancel or goal reached
+   */
+  void finish_current_goal() override;
+
+  /**
    * @brief Compute the best command given the current pose and velocity, with possible debug information
    *
    * Same as above computeVelocityCommands, but with debug results.
@@ -152,10 +167,13 @@ protected:
    * @brief Whether robot should rotate to rough path heading
    * @param carrot_pose current lookahead point
    * @param angle_to_path Angle of robot output relatie to carrot marker
+   * @param min_angle_to_rotate_to Min angle to trigger a rotate in place
    * @return Whether should rotate to path heading
    */
   bool shouldRotateToPath(
-    const geometry_msgs::msg::PoseStamped & carrot_pose, double & angle_to_path);
+    const geometry_msgs::msg::PoseStamped & carrot_pose, 
+    double & angle_to_path,
+    double & min_angle_to_rotate_to);
 
   /**
    * @brief Whether robot should rotate to final goal orientation
@@ -283,9 +301,12 @@ protected:
   double desired_linear_vel_, base_desired_linear_vel_;
   double lookahead_dist_;
   double rotate_to_heading_angular_vel_;
+  double angular_speed_limit_;
+  double min_angular_velocity_;
   double max_lookahead_dist_;
   double min_lookahead_dist_;
   double lookahead_time_;
+  bool initial_rotation_;
   bool use_velocity_scaled_lookahead_dist_;
   tf2::Duration transform_tolerance_;
   double min_approach_linear_velocity_;

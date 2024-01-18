@@ -47,6 +47,9 @@ protected:
    * @return true, if movement is greater than radius_, or false
    */
   bool isRobotMovedEnough(const geometry_msgs::msg::Pose2D & pose);
+  
+  bool isRobotRotatedEnough(const geometry_msgs::msg::Pose2D & pose);
+  
   /**
    * @brief Resets baseline pose with the current pose of the robot
    * @param pose Current pose of the robot
@@ -60,6 +63,7 @@ protected:
   rclcpp::Clock::SharedPtr clock_;
 
   double radius_;
+  double req_angle_;
   rclcpp::Duration time_allowance_{0, 0};
 
   geometry_msgs::msg::Pose2D baseline_pose_;

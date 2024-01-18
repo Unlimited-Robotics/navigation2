@@ -756,6 +756,7 @@ ObstacleLayer::resetBuffersLastUpdated()
   for (unsigned int i = 0; i < observation_buffers_.size(); ++i) {
     if (observation_buffers_[i]) {
       observation_buffers_[i]->resetLastUpdated();
+      observation_buffers_[i]->purgeAllObservations();
     }
   }
 }

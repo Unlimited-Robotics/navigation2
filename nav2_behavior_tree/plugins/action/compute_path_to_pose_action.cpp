@@ -26,6 +26,10 @@ ComputePathToPoseAction::ComputePathToPoseAction(
   const BT::NodeConfiguration & conf)
 : BtActionNode<nav2_msgs::action::ComputePathToPose>(xml_tag_name, action_name, conf)
 {
+  config().blackboard->set<int>("computed_paths", 0);
+  node_ = config().blackboard->get<rclcpp::Node::SharedPtr>("node");
+  feedback_publisher = config().blackboard->get<rclcpp::Publisher<raya_cmd_msgs::msg::CmdFeedbackHeader>::SharedPtr>("feedback_publisher");
+  error_publisher = config().blackboard->get<rclcpp::Publisher<raya_cmd_msgs::msg::CmdFeedbackHeader>::SharedPtr>("error_publisher");
 }
 
 void ComputePathToPoseAction::on_tick()
@@ -39,7 +43,25 @@ void ComputePathToPoseAction::on_tick()
 
 BT::NodeStatus ComputePathToPoseAction::on_success()
 {
+  int computed_paths = 0;
+  config().blackboard->template get<int>("computed_paths", computed_paths);
+  computed_paths += 1;
+  if (computed_paths >= 5){
+    computed_paths = 0;
+    reset_recovery_count();
+    RCLCPP_WARN(
+      node_->get_logger(), "RECOVERY COUNT RESTARTED...");
+    int recovery_count1 = 0;
+    config().blackboard->template get<int>("number_recoveries", recovery_count1);
+    RCLCPP_WARN(
+      node_->get_logger(), "RECOVERY COUNT = %d", recovery_count1);
+  }
+  config().blackboard->template set<int>("computed_paths", computed_paths); 
   setOutput("path", result_.result->path);
+  auto feedback_state = FeedbackMsg_();
+  feedback_state.feedback_code = 30;
+  feedback_state.feedback_msg = "Navigating.";
+  feedback_publisher->publish(feedback_state);
   return BT::NodeStatus::SUCCESS;
 }
 
@@ -47,6 +69,14 @@ BT::NodeStatus ComputePathToPoseAction::on_aborted()
 {
   nav_msgs::msg::Path empty_path;
   setOutput("path", empty_path);
+  int computed_paths = 0;
+  config().blackboard->template set<int>("computed_paths", computed_paths); 
+  RCLCPP_WARN(
+      node_->get_logger(), "COMPUTE PATH ABORTED");
+  auto error_state = FeedbackMsg_();
+  error_state.feedback_code = 116;
+  error_state.feedback_msg = "Couldn't compute path to pose.";
+  error_publisher->publish(error_state);
   return BT::NodeStatus::FAILURE;
 }
 

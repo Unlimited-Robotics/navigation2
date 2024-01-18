@@ -11,6 +11,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(raya_navigation_msgs REQUIRED)
+find_package(raya_motion_msgs REQUIRED)
+find_package(raya_cmd_msgs REQUIRED)
 find_package(behaviortree_cpp_v3 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -34,6 +37,9 @@ set(dependencies
   sensor_msgs
   nav2_msgs
   nav_msgs
+  raya_navigation_msgs
+  raya_motion_msgs
+  raya_cmd_msgs
   behaviortree_cpp_v3
   tf2
   tf2_ros
@@ -68,6 +74,21 @@ list(APPEND plugin_libs nav2_spin_cancel_bt_node)
 
 add_library(nav2_back_up_cancel_bt_node SHARED plugins/action/back_up_cancel_node.cpp)
 list(APPEND plugin_libs nav2_back_up_cancel_bt_node)
+
+add_library(nav2_go_to_angle_action_bt_node SHARED plugins/action/go_to_angle_action.cpp)
+list(APPEND plugin_libs nav2_go_to_angle_action_bt_node)
+
+add_library(nav2_rotate_action_bt_node SHARED plugins/action/rotate_action.cpp)
+list(APPEND plugin_libs nav2_rotate_action_bt_node)
+
+add_library(nav2_move_linear_action_bt_node SHARED plugins/action/move_linear_action.cpp)
+list(APPEND plugin_libs nav2_move_linear_action_bt_node)
+
+add_library(publish_feedback_action_bt_node SHARED plugins/action/publish_feedback.cpp)
+list(APPEND plugin_libs publish_feedback_action_bt_node)
+
+add_library(enable_feedback_action_bt_node SHARED plugins/action/enable_feedback.cpp)
+list(APPEND plugin_libs enable_feedback_action_bt_node)
 
 add_library(nav2_assisted_teleop_cancel_bt_node SHARED plugins/action/assisted_teleop_cancel_node.cpp)
 list(APPEND plugin_libs nav2_assisted_teleop_cancel_bt_node)

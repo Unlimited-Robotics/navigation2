@@ -46,7 +46,7 @@ ControllerServer::ControllerServer(const rclcpp::NodeOptions & options)
   default_ids_{"FollowPath"},
   default_types_{"dwb_core::DWBLocalPlanner"}
 {
-  RCLCPP_INFO(get_logger(), "Creating controller server");
+  RCLCPP_INFO(get_logger(), "Creating controller server version: RAYA");
 
   declare_parameter("controller_frequency", 20.0);
 
@@ -64,6 +64,9 @@ ControllerServer::ControllerServer(const rclcpp::NodeOptions & options)
   // The costmap node is used in the implementation of the controller
   costmap_ros_ = std::make_shared<nav2_costmap_2d::Costmap2DROS>(
     "local_costmap", std::string{get_namespace()}, "local_costmap");
+  RCLCPP_INFO(get_logger(), "CONTROLLER: LOCAL COSTMAP CREATED.");
+  // Launch a thread to run the costmap node
+  //costmap_thread_ = std::make_unique<nav2_util::NodeThread>(costmap_ros_);
 }
 
 ControllerServer::~ControllerServer()

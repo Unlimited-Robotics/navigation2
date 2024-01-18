@@ -20,7 +20,7 @@
 #include "nav2_msgs/action/compute_path_to_pose.hpp"
 #include "nav_msgs/msg/path.h"
 #include "nav2_behavior_tree/bt_action_node.hpp"
-
+#include "raya_cmd_msgs/msg/cmd_feedback_header.hpp" 
 namespace nav2_behavior_tree
 {
 
@@ -83,6 +83,21 @@ public:
           "Mapped name to the planner plugin type to use"),
       });
   }
+
+  private:
+  
+    void reset_recovery_count()
+    {
+      int recovery_count = 0;
+      config().blackboard->template set<int>("number_recoveries", recovery_count);
+      int next_recovery_child = 0;
+      config().blackboard->template set<int>("next_recovery_child", next_recovery_child);
+    }
+
+    rclcpp::Node::SharedPtr node_;
+    using FeedbackMsg_ = raya_cmd_msgs::msg::CmdFeedbackHeader;
+    rclcpp::Publisher<FeedbackMsg_>::SharedPtr feedback_publisher;
+    rclcpp::Publisher<FeedbackMsg_>::SharedPtr error_publisher;
 };
 
 }  // namespace nav2_behavior_tree

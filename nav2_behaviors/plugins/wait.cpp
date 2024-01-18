@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
 #include <chrono>
 #include <memory>
 
@@ -31,6 +32,15 @@ Wait::~Wait() = default;
 Status Wait::onRun(const std::shared_ptr<const WaitAction::Goal> command)
 {
   wait_end_ = node_.lock()->now() + rclcpp::Duration(command->time);
+  auto ros_node_ = rclcpp::Node::make_shared("wait_node_");
+  rclcpp::QoS qos(rclcpp::KeepLast(10));
+  
+  qos.reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE);
+  qos.durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
+  feedback_publisher =
+    ros_node_->create_publisher<raya_cmd_msgs::msg::CmdFeedbackHeader>(
+        "/nav2_feedback_state", qos
+      );  
   return Status::SUCCEEDED;
 }
 
@@ -43,6 +53,10 @@ Status Wait::onCycleUpdate()
   action_server_->publish_feedback(feedback_);
 
   if (time_left.nanoseconds() > 0) {
+    auto error_state = FeedbackMsg_();
+    error_state.feedback_code = 10;
+    error_state.feedback_msg = "Waiting.......";
+    feedback_publisher->publish(error_state);
     return Status::RUNNING;
   } else {
     return Status::SUCCEEDED;

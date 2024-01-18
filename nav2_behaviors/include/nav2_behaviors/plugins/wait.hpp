@@ -21,6 +21,7 @@
 
 #include "nav2_behaviors/timed_behavior.hpp"
 #include "nav2_msgs/action/wait.hpp"
+#include "raya_cmd_msgs/msg/cmd_feedback_header.hpp" 
 
 namespace nav2_behaviors
 {
@@ -55,6 +56,8 @@ public:
 protected:
   rclcpp::Time wait_end_;
   WaitAction::Feedback::SharedPtr feedback_;
+  using FeedbackMsg_ = raya_cmd_msgs::msg::CmdFeedbackHeader;
+  rclcpp::Publisher<FeedbackMsg_>::SharedPtr feedback_publisher;
 };
 
 }  // namespace nav2_behaviors

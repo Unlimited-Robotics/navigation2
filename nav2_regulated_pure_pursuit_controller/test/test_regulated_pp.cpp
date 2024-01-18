@@ -75,9 +75,9 @@ public:
   }
 
   bool shouldRotateToPathWrapper(
-    const geometry_msgs::msg::PoseStamped & carrot_pose, double & angle_to_path)
+    const geometry_msgs::msg::PoseStamped & carrot_pose, double & angle_to_path, double & min_angle)
   {
-    return shouldRotateToPath(carrot_pose, angle_to_path);
+    return shouldRotateToPath(carrot_pose, angle_to_path, min_angle);
   }
 
   bool shouldRotateToGoalHeadingWrapper(const geometry_msgs::msg::PoseStamped & carrot_pose)
@@ -411,15 +411,17 @@ TEST(RegulatedPurePursuitTest, rotateTests)
   // shouldRotateToPath
   geometry_msgs::msg::PoseStamped carrot;
   double angle_to_path_rtn;
-  EXPECT_EQ(ctrl->shouldRotateToPathWrapper(carrot, angle_to_path_rtn), false);
+  double min_angle;
+  min_angle = 0.85;
+  EXPECT_EQ(ctrl->shouldRotateToPathWrapper(carrot, angle_to_path_rtn, min_angle), false);
 
   carrot.pose.position.x = 0.5;
   carrot.pose.position.y = 0.25;
-  EXPECT_EQ(ctrl->shouldRotateToPathWrapper(carrot, angle_to_path_rtn), false);
+  EXPECT_EQ(ctrl->shouldRotateToPathWrapper(carrot, angle_to_path_rtn, min_angle), false);
 
   carrot.pose.position.x = 0.5;
   carrot.pose.position.y = 1.0;
-  EXPECT_EQ(ctrl->shouldRotateToPathWrapper(carrot, angle_to_path_rtn), true);
+  EXPECT_EQ(ctrl->shouldRotateToPathWrapper(carrot, angle_to_path_rtn, min_angle), true);
 
   // shouldRotateToGoalHeading
   carrot.pose.position.x = 0.0;

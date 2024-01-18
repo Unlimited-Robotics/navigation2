@@ -131,6 +131,7 @@ public:
    * @brief Reset last updated timestamp
    */
   void resetLastUpdated();
+  void purgeAllObservations();
 
 private:
   /**
@@ -152,6 +153,7 @@ private:
   std::recursive_mutex lock_;  ///< @brief A lock for accessing data in callbacks safely
   double obstacle_max_range_, obstacle_min_range_, raytrace_max_range_, raytrace_min_range_;
   tf2::Duration tf_tolerance_;
+  std::mutex costmap_mtx;
 };
 }  // namespace nav2_costmap_2d
 #endif  // NAV2_COSTMAP_2D__OBSERVATION_BUFFER_HPP_

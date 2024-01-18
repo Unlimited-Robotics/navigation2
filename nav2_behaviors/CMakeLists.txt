@@ -12,6 +12,8 @@ find_package(nav2_behavior_tree REQUIRED)
 find_package(nav2_util REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(raya_navigation_msgs REQUIRED)
+find_package(raya_cmd_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -38,6 +40,8 @@ set(dependencies
   nav2_behavior_tree
   nav2_msgs
   nav_msgs
+  raya_navigation_msgs
+  raya_cmd_msgs
   tf2
   tf2_geometry_msgs
   geometry_msgs

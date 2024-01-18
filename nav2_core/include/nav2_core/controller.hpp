@@ -93,6 +93,62 @@ public:
   virtual void deactivate() = 0;
 
   /**
+   * @brief Method to deactive planner and any threads involved in execution.
+   */
+  virtual void start_new_goal(
+        bool should_rotate = false, 
+        bool linear_movement = false,
+        float max_speed = 0.0,
+        bool enable_obstacles = true
+  ){
+    (void)should_rotate;
+    (void)linear_movement;
+    (void)max_speed;
+    (void)enable_obstacles;
+  };
+
+
+  virtual int update_velocity(
+    double x_velocity = 0.0,
+    double angular_velocity = 0.0,
+    double duration = 0.0,
+    bool enable_obstacles = true
+  ){
+    (void)x_velocity;
+    (void)angular_velocity;
+    (void)duration;
+    (void)enable_obstacles;
+
+    return 0;
+  }
+
+
+  virtual geometry_msgs::msg::TwistStamped checkFutureCollisions(
+    const geometry_msgs::msg::PoseStamped & pose,
+    double x_velocity = 0.0,
+    double angular_velocity = 0.0,
+    double duration = 0.1,
+    bool enable_obstacles = true
+  ){
+    (void)pose;
+    (void)x_velocity;
+    (void)angular_velocity;
+    (void)duration;
+    (void)enable_obstacles;
+
+    geometry_msgs::msg::TwistStamped cmd_vel;
+    cmd_vel.twist.linear.x = 0.0;
+    cmd_vel.twist.angular.z = 0.0;
+    return cmd_vel;
+  };
+  
+
+  /**
+   * @brief Method to deactive planner and any threads involved in execution.
+   */
+  virtual void finish_current_goal(){};
+
+  /**
    * @brief local setPlan - Sets the global plan
    * @param path The global plan
    */
