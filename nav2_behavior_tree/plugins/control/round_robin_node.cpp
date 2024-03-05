@@ -43,6 +43,7 @@ BT::NodeStatus RoundRobinNode::tick()
     current_child_idx_ = current_child_;
     TreeNode * child_node = children_nodes_[current_child_idx_];
     const BT::NodeStatus child_status = child_node->executeTick();
+
     switch (child_status) {
       case BT::NodeStatus::SUCCESS:
         {

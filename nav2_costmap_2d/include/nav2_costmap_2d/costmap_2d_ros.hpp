@@ -304,8 +304,6 @@ public:
   double getRobotRadius() {return robot_radius_;}
 
 protected:
-  rclcpp::Node::SharedPtr client_node_;
-
   // Publishers and subscribers
   rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PolygonStamped>::SharedPtr
     footprint_pub_;

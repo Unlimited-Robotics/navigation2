@@ -165,15 +165,24 @@ void
 InflationLayer::onFootprintChanged()
 {
   std::lock_guard<Costmap2D::mutex_t> guard(*getMutex());
-  inscribed_radius_ = layered_costmap_->getInscribedRadius();
+  auto footprint = layered_costmap_->getFootprint();
+  inscribed_radius_ = footprint[0].y;
+  if (inscribed_radius_ <= 0){
+    RCLCPP_ERROR(
+    logger_, "Error setting footprint inflation. Using incribed radius instead");
+    inscribed_radius_ = layered_costmap_->getInscribedRadius();
+  }
+  auto circumscri_radius_ = layered_costmap_->getCircumscribedRadius();
   cell_inflation_radius_ = cellDistance(inflation_radius_);
   computeCaches();
   need_reinflation_ = true;
 
   RCLCPP_DEBUG(
-    logger_, "InflationLayer::onFootprintChanged(): num footprint points: %zu,"
-    " inscribed_radius_ = %.3f, inflation_radius_ = %.3f",
-    layered_costmap_->getFootprint().size(), inscribed_radius_, inflation_radius_);
+    logger_, "InflationLayer::onFootprintChanged(): num footprint points: %lu,"
+    " inscribed_radius_ = %.3f, inflation_radius_ = %.3f, circumscri_radius_ = %.3f"
+    " footprint1 = %.3f, footprint2 = %.3f, footprint3 = %.3f, footprint3 = %.3f",
+    layered_costmap_->getFootprint().size(), inscribed_radius_, inflation_radius_, circumscri_radius_,
+    footprint[0].y, footprint[1].y, footprint[2].y, footprint[3].y);
 }
 
 void

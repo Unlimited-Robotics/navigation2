@@ -92,6 +92,9 @@ void RegulatedPurePursuitController::configure(
     node, plugin_name_ + ".max_allowed_time_to_collision_up_to_carrot",
     rclcpp::ParameterValue(1.0));
   declare_parameter_if_not_declared(
+    node, plugin_name_ + ".max_allowed_time_to_collision_",
+    rclcpp::ParameterValue(1.0));
+  declare_parameter_if_not_declared(
     node, plugin_name_ + ".use_collision_detection",
     rclcpp::ParameterValue(true));
   declare_parameter_if_not_declared(
@@ -159,6 +162,9 @@ void RegulatedPurePursuitController::configure(
   node->get_parameter(
     plugin_name_ + ".max_allowed_time_to_collision_up_to_carrot",
     max_allowed_time_to_collision_up_to_carrot_);
+  node->get_parameter(
+    plugin_name_ + ".max_allowed_time_to_collision",
+    max_allowed_time_to_collision_);
   node->get_parameter(
     plugin_name_ + ".use_collision_detection",
     use_collision_detection_);
@@ -378,7 +384,8 @@ geometry_msgs::msg::TwistStamped RegulatedPurePursuitController::computeVelocity
   double goal_angle_to_rotate_to;
   
   if (initial_rotation_){
-    goal_angle_to_rotate_to = 0.1;
+    RCLCPP_WARN(logger_, "INITIAL ROTATION RECEIVED...");
+    goal_angle_to_rotate_to = rotate_to_heading_min_angle_;
   } else {
     goal_angle_to_rotate_to = rotate_to_heading_min_angle_;
   }
@@ -543,10 +550,6 @@ bool RegulatedPurePursuitController::isCollisionImminent(
   {
     return true;
   }
-  //else{
-  //  std::cout << "x = " << robot_pose.pose.position.x << " y = " << robot_pose.pose.position.y << std::endl;
-  //  std::cout << "not in collision" << std::endl;
-  //}
 
   // visualization messages
   nav_msgs::msg::Path arc_pts_msg;
@@ -572,15 +575,19 @@ bool RegulatedPurePursuitController::isCollisionImminent(
     projection_time = costmap_->getResolution() / fabs(linear_vel);
   }
 
-  const geometry_msgs::msg::Point & robot_xy = robot_pose.pose.position;
+  //const geometry_msgs::msg::Point & robot_xy = robot_pose.pose.position;
   geometry_msgs::msg::Pose2D curr_pose;
   curr_pose.x = robot_pose.pose.position.x;
   curr_pose.y = robot_pose.pose.position.y;
   curr_pose.theta = tf2::getYaw(robot_pose.pose.orientation);
+  double footprint_cost = collision_checker_->footprintCostAtPose(
+    curr_pose.x, curr_pose.y, curr_pose.theta, costmap_ros_->getRobotFootprint());
+  std::cout << "footprint_cost = " << footprint_cost <<std::endl;
+  std::cout << "carrot_dist = " << carrot_dist <<std::endl;
 
   // only forward simulate within time requested
   int i = 1;
-  while (i * projection_time < max_allowed_time_to_collision_up_to_carrot_) {
+  while (i * projection_time < max_allowed_time_to_collision_) {
     i++;
 
     // apply velocity at curr_pose over distance
@@ -589,9 +596,9 @@ bool RegulatedPurePursuitController::isCollisionImminent(
     curr_pose.theta += projection_time * angular_vel;
 
     // check if past carrot pose, where no longer a thoughtfully valid command
-    if (hypot(curr_pose.x - robot_xy.x, curr_pose.y - robot_xy.y) > carrot_dist) {
-      break;
-    }
+    //if (hypot(curr_pose.x - robot_xy.x, curr_pose.y - robot_xy.y) > carrot_dist) {
+    //  break;
+    //}
 
     // store it for visualization
     pose_msg.pose.position.x = curr_pose.x;
@@ -919,6 +926,8 @@ RegulatedPurePursuitController::dynamicParametersCallback(
         min_approach_linear_velocity_ = parameter.as_double();
       } else if (name == plugin_name_ + ".max_allowed_time_to_collision_up_to_carrot") {
         max_allowed_time_to_collision_up_to_carrot_ = parameter.as_double();
+      } else if (name == plugin_name_ + ".max_allowed_time_to_collision") {
+        max_allowed_time_to_collision_ = parameter.as_double();
       } else if (name == plugin_name_ + ".cost_scaling_dist") {
         cost_scaling_dist_ = parameter.as_double();
       } else if (name == plugin_name_ + ".cost_scaling_gain") {
