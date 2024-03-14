@@ -385,7 +385,7 @@ geometry_msgs::msg::TwistStamped RegulatedPurePursuitController::computeVelocity
   
   if (initial_rotation_){
     RCLCPP_WARN(logger_, "INITIAL ROTATION RECEIVED...");
-    goal_angle_to_rotate_to = rotate_to_heading_min_angle_;
+    goal_angle_to_rotate_to = 0.01;
   } else {
     goal_angle_to_rotate_to = rotate_to_heading_min_angle_;
   }
@@ -425,7 +425,7 @@ geometry_msgs::msg::TwistStamped RegulatedPurePursuitController::computeVelocity
   else{
     cmd_vel.twist.angular.z = angular_vel;
   }
-  
+  //std::cout << "linear_vel = " << linear_vel << std::endl;
   if (initial_rotation_ &&  linear_vel != 0.0){
     initial_rotation_ = false;
     std::cout << "INITIAL ROTATION FINISHED" << std::endl;
@@ -548,6 +548,7 @@ bool RegulatedPurePursuitController::isCollisionImminent(
       robot_pose.pose.position.x, robot_pose.pose.position.y,
       tf2::getYaw(robot_pose.pose.orientation)))
   {
+    std::cout << "IN COLLISION" << std::endl;
     return true;
   }
 
@@ -575,15 +576,15 @@ bool RegulatedPurePursuitController::isCollisionImminent(
     projection_time = costmap_->getResolution() / fabs(linear_vel);
   }
 
-  //const geometry_msgs::msg::Point & robot_xy = robot_pose.pose.position;
+  const geometry_msgs::msg::Point & robot_xy = robot_pose.pose.position;
   geometry_msgs::msg::Pose2D curr_pose;
   curr_pose.x = robot_pose.pose.position.x;
   curr_pose.y = robot_pose.pose.position.y;
   curr_pose.theta = tf2::getYaw(robot_pose.pose.orientation);
-  double footprint_cost = collision_checker_->footprintCostAtPose(
-    curr_pose.x, curr_pose.y, curr_pose.theta, costmap_ros_->getRobotFootprint());
-  std::cout << "footprint_cost = " << footprint_cost <<std::endl;
-  std::cout << "carrot_dist = " << carrot_dist <<std::endl;
+  //double footprint_cost = collision_checker_->footprintCostAtPose(
+  //  curr_pose.x, curr_pose.y, curr_pose.theta, costmap_ros_->getRobotFootprint());
+  //std::cout << "footprint_cost = " << footprint_cost <<std::endl;
+  //std::cout << "carrot_dist = " << carrot_dist <<std::endl;
 
   // only forward simulate within time requested
   int i = 1;
@@ -596,9 +597,9 @@ bool RegulatedPurePursuitController::isCollisionImminent(
     curr_pose.theta += projection_time * angular_vel;
 
     // check if past carrot pose, where no longer a thoughtfully valid command
-    //if (hypot(curr_pose.x - robot_xy.x, curr_pose.y - robot_xy.y) > carrot_dist) {
-    //  break;
-    //}
+    if (hypot(curr_pose.x - robot_xy.x, curr_pose.y - robot_xy.y) > carrot_dist) {
+      break;
+    }
 
     // store it for visualization
     pose_msg.pose.position.x = curr_pose.x;
@@ -641,7 +642,7 @@ bool RegulatedPurePursuitController::inCollision(
   {
     return false;
   }
-
+  //std::cout << "FOOTPRINT COST AT POSE = " << footprint_cost << std::endl;
   // if occupied or unknown and not to traverse unknown space
   return footprint_cost >= static_cast<double>(LETHAL_OBSTACLE);
 }

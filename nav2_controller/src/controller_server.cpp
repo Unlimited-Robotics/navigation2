@@ -373,6 +373,7 @@ void ControllerServer::computeControl()
     std::string current_controller;
     if (findControllerId(c_name, current_controller)) {
       current_controller_ = current_controller;
+      controllers_[current_controller_]->start_new_goal();
     } else {
       action_server_->terminate_current();
       return;

@@ -167,6 +167,7 @@ InflationLayer::onFootprintChanged()
   std::lock_guard<Costmap2D::mutex_t> guard(*getMutex());
   auto footprint = layered_costmap_->getFootprint();
   inscribed_radius_ = footprint[0].y;
+  //inscribed_radius_ += 0.01;
   if (inscribed_radius_ <= 0){
     RCLCPP_ERROR(
     logger_, "Error setting footprint inflation. Using incribed radius instead");
