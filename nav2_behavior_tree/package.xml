@@ -23,9 +23,6 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>nav2_msgs</build_depend>
   <build_depend>nav_msgs</build_depend>
-  <build_depend>raya_motion_msgs</build_depend> 
-  <build_depend>raya_navigation_msgs</build_depend>
-  <build_depend>raya_cmd_msgs</build_depend>
   <build_depend>tf2</build_depend>
   <build_depend>tf2_ros</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
@@ -45,9 +42,6 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>nav2_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
-  <exec_depend>raya_motion_msgs</exec_depend>
-  <exec_depend>raya_navigation_msgs</exec_depend>
-  <exec_depend>raya_cmd_msgs</exec_depend>
   <exec_depend>tf2</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>tf2_geometry_msgs</exec_depend>

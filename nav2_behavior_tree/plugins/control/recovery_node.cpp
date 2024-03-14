@@ -54,10 +54,6 @@ BT::NodeStatus RecoveryNode::tick()
 
         case BT::NodeStatus::FAILURE:
           {
-            int recovery_count = 0;
-            config().blackboard->template get<int>("number_recoveries", recovery_count); 
-            retry_count_ = recovery_count;
-            std::cout << "retry_count_ = " << retry_count_ << "\n";
             if (retry_count_ < number_of_retries_) {
               // halt first child and tick second child in next iteration
               ControlNode::haltChild(0);
@@ -89,7 +85,6 @@ BT::NodeStatus RecoveryNode::tick()
             ControlNode::haltChild(1);
             retry_count_++;
             current_child_idx_--;
-            config().blackboard->template set<int>("number_recoveries", retry_count_);
           }
           break;
 

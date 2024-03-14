@@ -41,7 +41,7 @@ SmacPlanner2D::SmacPlanner2D()
 SmacPlanner2D::~SmacPlanner2D()
 {
   RCLCPP_INFO(
-    _logger, "BRAYAN: Destroying plugin %s of type SmacPlanner2D",
+    _logger, "RAYA: Destroying plugin %s of type SmacPlanner2D",
     _name.c_str());
 }
 
@@ -54,9 +54,7 @@ void SmacPlanner2D::configure(
   _node = parent;
   auto node = parent.lock();
   _logger = node->get_logger();
-  RCLCPP_INFO(_logger, "CONFIGURE : BRAYAN001");
   _clock = node->get_clock();
-  RCLCPP_INFO(_logger, "CONFIGURE : BRAYAN002");
   _costmap = costmap_ros->getCostmap();
   _name = name;
   _global_frame = costmap_ros->getGlobalFrameID();

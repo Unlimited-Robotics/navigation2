@@ -20,7 +20,6 @@
 
 #include "nav2_msgs/action/follow_path.hpp"
 #include "nav2_behavior_tree/bt_action_node.hpp"
-#include "raya_cmd_msgs/msg/cmd_feedback_header.hpp" 
 
 namespace nav2_behavior_tree
 {
@@ -47,8 +46,6 @@ public:
    */
   void on_tick() override;
 
-  BT::NodeStatus on_aborted() override;
-  
   /**
    * @brief Function to perform some user-defined operation after a timeout
    * waiting for a result that hasn't been received yet
@@ -70,13 +67,6 @@ public:
         BT::InputPort<std::string>("goal_checker_id", ""),
       });
   }
-
-private:
-  rclcpp::Node::SharedPtr node_;
-  using FeedbackMsg_ = raya_cmd_msgs::msg::CmdFeedbackHeader;
-  rclcpp::Publisher<FeedbackMsg_>::SharedPtr feedback_publisher;
-  rclcpp::Publisher<FeedbackMsg_>::SharedPtr error_publisher;
-  bool feedback_initialized_;
 };
 
 }  // namespace nav2_behavior_tree

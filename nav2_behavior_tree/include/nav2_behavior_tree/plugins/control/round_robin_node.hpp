@@ -54,11 +54,11 @@ namespace nav2_behavior_tree
 class RoundRobinNode : public BT::ControlNode
 {
 public:
-  ///**
-  // * @brief A constructor for nav2_behavior_tree::RoundRobinNode
-  // * @param name Name for the XML tag for this node
-  // */
-  //explicit RoundRobinNode(const std::string & name);
+  /**
+   * @brief A constructor for nav2_behavior_tree::RoundRobinNode
+   * @param name Name for the XML tag for this node
+   */
+  explicit RoundRobinNode(const std::string & name);
 
   /**
    * @brief A constructor for nav2_behavior_tree::RoundRobinNode
@@ -85,7 +85,6 @@ public:
   static BT::PortsList providedPorts() {return {};}
 
 private:
-  int current_child_ = 0;
   unsigned int current_child_idx_{0};
   unsigned int num_failed_children_{0};
 };

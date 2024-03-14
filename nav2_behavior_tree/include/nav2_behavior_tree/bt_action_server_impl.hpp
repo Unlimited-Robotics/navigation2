@@ -121,8 +121,6 @@ bool BtActionServer<ActionT>::on_configure()
 
   // Put items on the blackboard
   blackboard_->set<rclcpp::Node::SharedPtr>("node", client_node_);  // NOLINT
-  blackboard_->set<std::shared_ptr<ActionServer>>("action_server", action_server_);  // NOLINT
-  blackboard_->set<bool>("feedback_initialized", false);
   blackboard_->set<std::chrono::milliseconds>("server_timeout", default_server_timeout_);  // NOLINT
   blackboard_->set<std::chrono::milliseconds>("bt_loop_duration", bt_loop_duration_);  // NOLINT
 
